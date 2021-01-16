@@ -12,28 +12,24 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import static javax.lang.model.type.TypeKind.BYTE;
-
 
 /**
  * 聊天线程
  */
 public class ChatThreadWindow {
-    DatagramSocket ds;
     private String name;
-    JComboBox cb;
+    JComboBox cb;//组合框
     private JFrame f;
     JTextArea ta;
     private JTextField tf;
     private static int total;// 在线人数统计
+    DatagramSocket ds;
 
-    public ChatThreadWindow() {
-        /*
-         * 设置聊天室窗口界面
-         */
+    public ChatThreadWindow(String name, DatagramSocket ds) {
+        this.ds = ds;
+        this.name=name;
         f = new JFrame();
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         f.setSize(600, 400);
         f.setTitle("聊天室" + " - " + name + "     当前在线人数:" + ++total);
         f.setLocation(300, 200);
@@ -56,39 +52,41 @@ public class ChatThreadWindow {
         GetMessageThread getMessageThread = new GetMessageThread(this);
         getMessageThread.start();
 
-         /*
+        /*
         提示XXX进入聊天室
          */
         showXXXIntoChatRoom();
     }
 
+    public ChatThreadWindow() {
+
+    }
+
     public void showXXXIntoChatRoom() {
-        String url = "jdbc:oracle:thin:@localhost:1521:orcl";
+        String url = "jdbc:oracle:thin:@localhost:1521:orclhc";
         String username_db = "opts";
         String password_db = "opts1234";
         PreparedStatement pstmt = null;
-        Connection conn =null;
-
-        try{
-            conn= DriverManager.getConnection(url,username_db,password_db);
-            String sql="SELECT username,ip,port FROM users WHERE status='online'";
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(url, username_db, password_db);
+            String sql = "SELECT username,ip,port FROM users WHERE status='online'";
             pstmt = conn.prepareStatement(sql);
             ResultSet rs = pstmt.executeQuery();
-            while(rs.next()){
+            while (rs.next()) {
                 String username=rs.getString("USERNAME");
-                String ip=rs.getString("IP");
-                int port =rs.getInt("PORT");
+                String ip = rs.getString("IP");
+                int port = rs.getInt("PORT");
                 System.out.println(ip);
                 System.out.println(port);
-                byte[] ipB=new byte[4];
+                byte[] ipB = new byte[4];
 
-                String ips[] =ip.split("\\.");
+                String ips[] = ip.split("\\.");
                 for (int i = 0; i < ips.length; i++) {
                     ipB[i] = (byte)Integer.parseInt(ips[i]);
                 }
-
                 if(!username.equals(name)){
-                    String message =name+"进入聊天室";
+                    String message = name+"进入了聊天室";
                     byte[] m = message.getBytes();
                     DatagramPacket dp = new DatagramPacket(m, m.length);
                     dp.setAddress(InetAddress.getByAddress(ipB));
@@ -97,18 +95,10 @@ public class ChatThreadWindow {
                     ds.send(dp);//投递
                 }
             }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
+        } catch (SQLException | UnknownHostException | SocketException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    {
-
     }
 }

@@ -88,14 +88,15 @@ public class LoginThread extends Thread {
             public void actionPerformed(ActionEvent e) {
                 String username = loginname.getText();
                 String password = loginPassword.getText();
-                 String sql="";
+                PreparedStatement pstmt=null;
+                String sql="";
                 try {
                     String url = "jdbc:oracle:thin:@localhost:1521:orcl";
                     String username_db = "opts";
                     String password_db = "opts1234";
                     Connection conn = DriverManager.getConnection(url, username_db, password_db);
                     sql="SELECT password FROM users WHERE username=?";
-                    PreparedStatement pstmt = conn.prepareStatement(sql);
+                     pstmt = conn.prepareStatement(sql);
                     pstmt.setString(1,username);
                     ResultSet rs = pstmt.executeQuery();
                     if (rs.next()) {
@@ -120,12 +121,12 @@ public class LoginThread extends Thread {
                             sql = " UPDATE users SET ip=?,port=?,status=? WHERE username=?";
                             pstmt=conn.prepareStatement(sql);
                             pstmt.setString(1,addr.getHostAddress());
-                            pstmt.setString(2,username);
+                            pstmt.setInt(2,port);
                             pstmt.setString(3,"online");
                             pstmt.setString(4,username);
                             pstmt.executeUpdate();
                             loginf.setVisible(false);
-                            ChatThreadWindow chatThreadWindow=new ChatThreadWindow();
+                            ChatThreadWindow chatThreadWindow=new ChatThreadWindow(username,ds);
                         } else {
                             System.out.println("登录失败");
                         }
